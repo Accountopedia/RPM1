@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Practice Management Tool</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+    header { background: #0077b6; color: #fff; padding: 1em; text-align: center; position: sticky; top: 0; z-index: 10; }
+    main { padding: 2em; }
+    button { margin: 0.5em 0; padding: 0.5em 1em; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1em; background: #fff; }
+    th, td { padding: 0.75em; border: 1px solid #ccc; }
+    th { background: #e0e0e0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Practice Management Tool</h1>
+    <button onclick="saveAndExit()">Save</button>
+    <button onclick="logoutUser()">Logout</button>
+  </header>
+  <main>
+    <section>
+      <h2>Employee Time Entry</h2>
+      <input type="date" id="entryDate">
+      <select id="clientSelect"></select>
+      <select id="workCodeSelect"></select>
+      <input type="number" id="hours" placeholder="Hours">
+      <textarea id="memo" placeholder="Work Description"></textarea>
+      <button onclick="logEntry()">Save Draft</button>
+      <button onclick="showFinalReview()">Review and Submit</button>
+      <table>
+        <thead><tr><th>Client</th><th>Work Code</th><th>Hours</th><th>Memo</th><th>Billable</th><th>Action</th></tr></thead>
+        <tbody id="draftPreview"></tbody>
+      </table>
+      <p>Total Billable Hours: <span id="billableTotal">0</span></p>
+      <p>Total Non-Billable Hours: <span id="nonBillableTotal">0</span></p>
+    </section>
+  </main>
+  <script>
+    let draftEntries = [];
+
+    function saveAndExit() {
+      alert("Draft saved successfully.");
+    }
+
+    function logoutUser() {
+      alert("Logging out...");
+    }
+
+    function logEntry() {
+      const client = document.getElementById('clientSelect').value;
+      const workCode = document.getElementById('workCodeSelect').value;
+      const hours = parseFloat(document.getElementById('hours').value);
+      const memo = document.getElementById('memo').value;
+      const date = document.getElementById('entryDate').value;
+      if (!client || !workCode || isNaN(hours) || !date) return alert("Please complete all fields.");
+
+      const isBillable = workCode.includes("PAY") || workCode.includes("BK") || workCode.includes("PRJ");
+      draftEntries.push({ client, workCode, hours, memo, billable: isBillable, date });
+
+      document.getElementById('hours').value = '';
+      document.getElementById('memo').value = '';
+      renderDrafts();
+    }
+
+    function renderDrafts() {
+      const tbody = document.getElementById('draftPreview');
+      tbody.innerHTML = '';
+      let totalBill = 0, totalNonBill = 0;
+
+      draftEntries.forEach((e, i) => {
+        tbody.innerHTML += `<tr>
+          <td>${e.client}</td><td>${e.workCode}</td><td>${e.hours}</td><td>${e.memo}</td><td>${e.billable ? 'Yes' : 'No'}</td>
+          <td><button onclick="deleteDraft(${i})">🗑️</button></td>
+        </tr>`;
+        if (e.billable) totalBill += e.hours;
+        else totalNonBill += e.hours;
+      });
+
+      document.getElementById('billableTotal').textContent = totalBill.toFixed(1);
+      document.getElementById('nonBillableTotal').textContent = totalNonBill.toFixed(1);
+    }
+
+    function deleteDraft(index) {
+      draftEntries.splice(index, 1);
+      renderDrafts();
+    }
+
+    function showFinalReview() {
+      if (draftEntries.length === 0) return alert("No entries to submit.");
+      if (confirm("Are you sure you want to submit? You cannot edit after submission.")) {
+        alert("Entries submitted successfully.");
+        draftEntries = [];
+        renderDrafts();
+      }
+    }
+  </script>
+</body>
+</html>
